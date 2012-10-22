@@ -21,4 +21,35 @@ except ValueError, e : #If a non-number is found then:
 	print "File contains non-number characters"
 	raw_input("") #Used so that if script is run non-interactively, terminal/prompt will not imediately close and you can read the error message
 	exit(0) #Forces exit
-print indata
+print indata, "\n"
+print "The lowest number is %s\nWould you like to change it?" %(min(indata))
+prompt = raw_input(">").lower()
+if (prompt == '1') or (prompt == 'y') or (prompt == 'yes') or (prompt == 'sure') or (prompt == 'true')  or (prompt == 'ja') :
+	print "What would you like to change it to?"
+	while True :
+		prompt = raw_input(">")
+		try :
+			prompt = int(prompt)
+			break
+		except ValueError, e :
+			print "Enter a number to be the new min value"
+	minval = prompt
+	print "Min value is now %s\n" %(minval)
+else :
+	minval = min(indata)
+	print ""
+print "The highest number is %s\nWould you like to change it?" %(max(indata))
+prompt = raw_input(">").lower()
+if (prompt == '1') or (prompt == 'y') or (prompt == 'yes') or (prompt == 'sure') or (prompt == 'true')  or (prompt == 'ja') :
+	print "What would you like to change it to?"
+	while True :
+		prompt = raw_input(">")
+		try :
+			prompt = int(prompt)
+			break
+		except ValueError, e :
+			print "Enter a number to be the new min value"
+	maxval = prompt
+	print "Min value is now %s" %(minval)
+else :
+	maxval = min(indata)
