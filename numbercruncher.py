@@ -20,7 +20,7 @@ indata = map(lambda s: s.strip(), indata) #Removes new lines
 if not indata[0].isdigit() : #Removed header if exists
 	del indata[0]
 try :
-	indata = map(int, indata) #Converts items in list to strings
+	indata = map(long, indata) #Converts items in list to strings
 except ValueError, e : #If a non-number is found then:
 	print "File contains non-number characters"
 	raw_input("") #Used so that if script is run non-interactively, terminal/prompt will not imediately close and you can read the error message
@@ -33,7 +33,7 @@ if (prompt == '1') or (prompt == 'y') or (prompt == 'yes') or (prompt == 'sure')
 	while True :
 		prompt = raw_input(">")
 		try : #Will try to turn the input into a prompt
-			prompt = int(prompt)
+			prompt = long(prompt)
 			break
 		except ValueError, e : #If doing so raises a ValueError then instead of crashing the following is done:
 			print "Enter a number to be the new min value"
@@ -49,7 +49,7 @@ if (prompt == '1') or (prompt == 'y') or (prompt == 'yes') or (prompt == 'sure')
 	while True :
 		prompt = raw_input(">")
 		try : #Will try to turn the input into a prompt
-			prompt = int(prompt)
+			prompt = long(prompt)
 			break
 		except ValueError, e : #If doing so raises a ValueError then instead of crashing the following is done:
 			print "Enter a number to be the new min value"
