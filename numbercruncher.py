@@ -6,7 +6,7 @@ except ImportError, e:
 	print "ConfigObj module not found - ConfigParser will be used instead\n"
 	outengine = "parser"
 	outfile = RawConfigParser()
-from os import curdir, sep, access, R_OK
+from os import curdir, sep, access, R_OK, startfile, path, remove
 from decimal import Decimal, InvalidOperation
 from math import ceil
 
@@ -26,12 +26,20 @@ while True : #Infinite loop
 		print "File not found"
 print ""		
 
-print "Please type a name for output file"
-prompt = raw_input(">")
-if prompt == "" : #If nothing put in prompt
-	outloc = dot+sep+"output.txt" #For testing purposes - saves me typing it in every time
-else :
-	outloc = dot+sep+prompt+".txt" #Adds ./ in front of the filename to generate a filepath from the scripts directory
+while True :
+	print "Please type a name for output file"
+	prompt = raw_input(">")
+	if prompt == "" : #If nothing put in prompt
+		outloc = dot+sep+"output.txt" #For testing purposes - saves me typing it in every time
+	else :
+		outloc = dot+sep+prompt+".txt" #Adds ./ in front of the filename to generate a filepath from the scripts directory
+	if access(outloc, R_OK) :
+		prompt = raw_input("File already exists - would you like to overwrite?\n>")
+		if (prompt == '1') or (prompt == 'y') or (prompt == 'yes') or (prompt == 'sure') or (prompt == 'true')  or (prompt == 'ja') or (prompt == 'ok') or (prompt == 'okay') : #Nice and thorough
+			remove(outloc)
+			break
+	else :
+		break
 print ""
 
 if outengine == "obj" :
@@ -105,9 +113,29 @@ if outengine == "obj" :
 	outfile['Stats']['classtotal'] = str(classtotal)
 	outfile['Stats']['classrange'] = str(classrange)
 	outfile['Classes'] = {}
-	for element in range(1, classtotal) :
+	outfile['ClassSizes'] = {}
+	for element in range(classtotal+1) :
 		outfile['Classes'][str(element)] = {}
 		outfile['Classes'][str(element)]['list'] = []
+		outfile['Classes'][str(element)]['slist'] = []
+	for element in indata :
+		if element == minval :
+			numclass = 1
+		elif (element < minval) or (element > maxval) :
+			numclass = 0
+		else :
+			numclass = str(long(ceil((element-minval)/classrange)))
+			outfile['Classes'][numclass]['list'].append(element)
+			outfile['Classes'][numclass]['slist'].append(str(element))
+	for element in range(classtotal+1) :
+		outfile['Classes'][str(element)]['size'] = len(outfile['Classes'][str(element)]['list'])
+		if outfile['Classes'][str(element)]['size'] > 0 :
+			outfile['Classes'][str(element)]['min'] = str(min(outfile['Classes'][str(element)]['list']))
+			outfile['Classes'][str(element)]['max'] = str(max(outfile['Classes'][str(element)]['list']))
+			outfile['Classes'][str(element)]['range'] = long(outfile['Classes'][str(element)]['max']) - long(outfile['Classes'][str(element)]['min'])
+			outfile['Classes'][str(element)]['sum'] = sum(outfile['Classes'][str(element)]['list'])
+			outfile['Classes'][str(element)]['mean'] = int(long(round(outfile['Classes'][str(element)]['sum']/outfile['Classes'][str(element)]['size'])))
+		outfile['ClassSizes'][str(element)] = len(outfile['Classes'][str(element)]['list'])
 	outfile.write()
 else :
 	outfile.add_section('stats')
@@ -118,13 +146,20 @@ else :
 	outfile.set('stats', 'classtotal', classtotal)
 	outfile.set('stats', 'classrange', classrange)
 	outfile.add_section('classtotals')
-	for element in range(1, classtotal) :
+	for element in range(classtotal+1) :
 		exec("class%slist = []" %(element))
 	for element in indata :
-		numclass = long(ceil(element/classrange))
+		if element == minval :
+			numclass = 1
+		elif (element < minval) or (element > maxval) :
+			numclass = 0
+		else :
+			numclass = long(ceil((element-minval)/classrange))
 		exec("class%slist.append(element)" %(numclass))
-	for element in range(1, classtotal) :
-		exec("classtotal = len(class%list)" %(element))
-		outfile.set('classtotals', element, classtotal)
+	for element in range(classtotal+1) :
+		exec("classtotal = len(class%slist)" %(str(element)))
+		outfile.set('classtotals', str(element), classtotal)
 	with open(outloc, 'w') as fileout :
-		fileout.write(outfile)
+		outfile.write(fileout)
+raw_input("Crunching Completed Succesfully\nPress enter to view output")
+startfile(path.normpath(outloc))
