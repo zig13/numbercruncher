@@ -1,11 +1,13 @@
 from ConfigParser import RawConfigParser
 try:
 	from configobj import ConfigObj #I'm using configobj instead of the built-in Configeditor as it allows for nested sections and list values
+	#raise ImportError #Overide for testing purposes
 	outengine = "obj"
 except ImportError, e:
 	print "ConfigObj module not found - ConfigParser will be used instead\n"
 	outengine = "parser"
 	outfile = RawConfigParser()
+
 from os import curdir, sep, access, R_OK, startfile, path, remove
 from decimal import Decimal, InvalidOperation
 from math import ceil
@@ -56,6 +58,8 @@ except ValueError, e : #If a non-number is found then:
 	print "File contains non-number characters"
 	raw_input("") #Used so that if script is run non-interactively, terminal/prompt will not imediately close and you can read the error message
 	exit(0) #Forces exit
+	
+totalval = len(indata)
 
 print "The lowest number is %s\nWould you like to change it?" %(min(indata))
 prompt = raw_input(">").lower() #Captures use input and puts the input into lowercase so 'Yes' will be recognised as 'yes'
@@ -69,6 +73,9 @@ if (prompt == '1') or (prompt == 'y') or (prompt == 'yes') or (prompt == 'sure')
 		except ValueError, e : #If doing so raises a ValueError then instead of crashing the following is done:
 			print "Enter a number to be the new min value"
 	minval = prompt
+	print "Min value is now %s\n" %(minval)
+elif prompt.isdigit() :
+	minval = long(prompt)
 	print "Min value is now %s\n" %(minval)
 else :
 	minval = min(indata)
@@ -86,7 +93,10 @@ if (prompt == '1') or (prompt == 'y') or (prompt == 'yes') or (prompt == 'sure')
 		except ValueError, e : #If doing so raises a ValueError then, instead of crashing the following is done:
 			print "Enter a number to be the new min value"
 	maxval = prompt
-	print "Min value is now %s\n" %(minval)
+	print "Max value is now %s\n" %(maxval)
+elif prompt.isdigit() :
+	maxval = long(prompt)
+	print "Max value is now %s\n" %(maxval)
 else :
 	maxval = max(indata)
 	print ""
@@ -97,37 +107,38 @@ print "How many classes would you like to sort with?"
 while True :
 	prompt = raw_input(">")
 	try : #Will try to turn the input into a long number
-		classtotal = Decimal(prompt)
+		totalclasses = Decimal(prompt)
 		break
 	except InvalidOperation, e : #If doing so raises InvalidOperation then, instead of crashing the following is done:
 		pass 
-classrange = rangeval/classtotal
+classrange = rangeval/totalclasses
 meanval = int(round(sum(indata)/long(len(indata))))
 
-if outengine == "obj" :
+if outengine == "obj" : #This is the code if the downloadable module ConfigObj is used
 	outfile['Stats'] = {}
+	outfile['Stats']['total'] = totalval
 	outfile['Stats']['min'] = str(minval)
 	outfile['Stats']['max'] = str(maxval)
 	outfile['Stats']['range'] = str(rangeval)
 	outfile['Stats']['mean'] = int(round(sum(indata)/long(len(indata))))
-	outfile['Stats']['classtotal'] = str(classtotal)
+	outfile['Stats']['totalclasses'] = str(totalclasses)
 	outfile['Stats']['classrange'] = str(classrange)
 	outfile['Classes'] = {}
 	outfile['ClassSizes'] = {}
-	for element in range(classtotal+1) :
+	for element in range(totalclasses+1) :
 		outfile['Classes'][str(element)] = {}
 		outfile['Classes'][str(element)]['list'] = []
 		outfile['Classes'][str(element)]['slist'] = []
 	for element in indata :
 		if element == minval :
-			numclass = 1
+			numclass = '1'
 		elif (element < minval) or (element > maxval) :
-			numclass = 0
+			numclass = '0'
 		else :
 			numclass = str(long(ceil((element-minval)/classrange)))
-			outfile['Classes'][numclass]['list'].append(element)
-			outfile['Classes'][numclass]['slist'].append(str(element))
-	for element in range(classtotal+1) :
+		outfile['Classes'][numclass]['list'].append(element)
+		outfile['Classes'][numclass]['slist'].append(str(element))
+	for element in range(1, totalclasses+1) :
 		outfile['Classes'][str(element)]['size'] = len(outfile['Classes'][str(element)]['list'])
 		if outfile['Classes'][str(element)]['size'] > 0 :
 			outfile['Classes'][str(element)]['min'] = str(min(outfile['Classes'][str(element)]['list']))
@@ -136,30 +147,37 @@ if outengine == "obj" :
 			outfile['Classes'][str(element)]['sum'] = sum(outfile['Classes'][str(element)]['list'])
 			outfile['Classes'][str(element)]['mean'] = int(long(round(outfile['Classes'][str(element)]['sum']/outfile['Classes'][str(element)]['size'])))
 		outfile['ClassSizes'][str(element)] = len(outfile['Classes'][str(element)]['list'])
+		del outfile['Classes'][str(element)]['list']
+	if len(outfile['Classes']['0']['list']) > 0 :
+		outfile['Stats']['Exluded_Values'] = len(outfile['Classes']['0']['list'])
+	del outfile['Classes']['0']
 	outfile.write()
-else :
-	outfile.add_section('stats')
-	outfile.set('stats', 'minval', minval)
-	outfile.set('stats', 'maxval', maxval)
-	outfile.set('stats', 'range', rangeval)
-	outfile.set('stats', 'mean', meanval)
-	outfile.set('stats', 'classtotal', classtotal)
-	outfile.set('stats', 'classrange', classrange)
-	outfile.add_section('classtotals')
-	for element in range(classtotal+1) :
-		exec("class%slist = []" %(element))
-	for element in indata :
-		if element == minval :
+else : #This is the code if the built-in ConfigParser module is used
+	outfile.add_section('Stats')
+	outfile.set('Stats', 'totalval', totalval)
+	outfile.set('Stats', 'minval', minval)
+	outfile.set('Stats', 'maxval', maxval)
+	outfile.set('Stats', 'range', rangeval)
+	outfile.set('Stats', 'mean', meanval)
+	outfile.set('Stats', 'totalclasses', totalclasses)
+	outfile.set('Stats', 'classrange', classrange)
+	outfile.add_section('ClassSizes') #Creates new empty section class sizes
+	classes = []
+	for element in range(totalclasses+1) : #Range creates a list of numbers from 0 to the number of classes. 0 is used for excluded values and the others represent a class each
+		classes.append([]) #For every class creates an empty list in the list 'classes'
+	for element in indata : #For every number inputted
+		if element == minval : #Bit hacky but enables the math to be a lot simpler
 			numclass = 1
-		elif (element < minval) or (element > maxval) :
-			numclass = 0
+		elif (element < minval) or (element > maxval) : #If outside range (will only occur if user changes range)
+			numclass = 0 #Will result in number being added to the excluded list
 		else :
-			numclass = long(ceil((element-minval)/classrange))
-		exec("class%slist.append(element)" %(numclass))
-	for element in range(classtotal+1) :
-		exec("classtotal = len(class%slist)" %(str(element)))
-		outfile.set('classtotals', str(element), classtotal)
+			numclass = int(ceil((element-minval)/classrange)) #The MATHS 
+		classes[numclass].append(element)
+	for element in range(1, totalclasses+1) : #This range starts at 1 thus excluding the excluded value list
+		outfile.set('ClassSizes', (str(element)), len(classes[element])) #Counts values in each class list
+	if len(classes[0]) > 0 : #If some values were excluded
+		outfile.set('Stats', 'excluded_values', len(classes[0]))
 	with open(outloc, 'w') as fileout :
 		outfile.write(fileout)
-raw_input("Crunching Completed Succesfully\nPress enter to view output")
-startfile(path.normpath(outloc))
+raw_input("Crunching Completed Succesfully\nPress enter to view output") #Made raw_input rather than pritn so dosn't imediately close on finish
+startfile(path.normpath(outloc)) #Opens output with default text editor
