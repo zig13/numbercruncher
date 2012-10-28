@@ -56,8 +56,8 @@ for element in indata : #For every number in numbers file
 	else :
 		numclass = int(ceil((element-minval)/(rangeval/totalclasses))) #The MATHS 
 	classes[numclass].append(element)
-for element in range(1, totalclasses+1) : #This range starts at 1 thus excluding the excluded value list
-	outfile.set('ClassSizes', (str(element)), len(classes[element])) #Counts values in each class list
+for element in range(totalclasses) : #This range starts at 1 thus excluding the excluded value list
+	outfile.set('ClassSizes', str(int(minval+(element*(rangeval/totalclasses)))), len(classes[element+1])) #Counts values in each class list
 if len(classes[0]) > 0 : #If some values were excluded
 	outfile.add_section('Stats')
 	outfile.set('Stats', 'excluded_values', len(classes[0]))
