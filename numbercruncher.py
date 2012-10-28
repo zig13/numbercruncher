@@ -59,6 +59,7 @@ for element in indata : #For every number in numbers file
 for element in range(1, totalclasses+1) : #This range starts at 1 thus excluding the excluded value list
 	outfile.set('ClassSizes', (str(element)), len(classes[element])) #Counts values in each class list
 if len(classes[0]) > 0 : #If some values were excluded
+	outfile.add_section('Stats')
 	outfile.set('Stats', 'excluded_values', len(classes[0]))
 with open(outloc, 'w') as fileout :
 	outfile.write(fileout)
